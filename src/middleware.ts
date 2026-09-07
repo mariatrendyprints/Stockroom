@@ -1,11 +1,19 @@
 import { NextResponse, NextRequest } from "next/server";
-import { getToken, decode } from "next-auth/jwt";
+import { decode } from "next-auth/jwt";
 
 const ADMIN_ONLY_PREFIXES = ["/dashboard", "/reports", "/settings"];
 
+// Read directly by the known cookie name instead of relying on next-auth's
+// getToken()'s secureCookie auto-detection, which wasn't reliably finding
+// the cookie in Vercel's Edge Middleware runtime (confirmed via diagnostics:
+// the cookie was present in req.cookies, but getToken() reported no raw
+// value at all). Production is always HTTPS on Vercel, so the cookie name
+// is always the "__Secure-" prefixed one NextAuth sets on login.
+const SESSION_COOKIE_NAME = "__Secure-next-auth.session-token";
+
 export default async function middleware(req: NextRequest) {
   const secret = process.env.NEXTAUTH_SECRET ?? "";
-  const rawToken = await getToken({ req, secret, raw: true });
+  const rawToken = req.cookies.get(SESSION_COOKIE_NAME)?.value;
 
   let token: Awaited<ReturnType<typeof decode>> = null;
   let decodeError = "";
@@ -25,11 +33,6 @@ export default async function middleware(req: NextRequest) {
     "x-debug-raw-len": String(rawToken?.length ?? 0),
     "x-debug-has-token": String(!!token),
     "x-debug-decode-error": decodeError.slice(0, 300),
-    "x-debug-secret-len": String(secret.length),
-    "x-debug-cookie-names": req.cookies
-      .getAll()
-      .map((c) => c.name)
-      .join(","),
   };
 
   function withDebug(res: NextResponse) {
