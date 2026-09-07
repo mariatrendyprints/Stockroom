@@ -1,0 +1,97 @@
+// Stockroom data model — see Spec.md section 5.
+// Postgres (Supabase). DATABASE_URL should be Supabase's pooled connection
+// string (port 6543, "Transaction" mode) since serverless hosts open many
+// short-lived connections; DIRECT_URL is the unpooled one (port 5432),
+// used only for migrations. See README's "Deploying to production".
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+// role: "staff" | "admin" — kept as String (not a Prisma enum) so the
+// schema is portable to Postgres without a provider-specific branch.
+model User {
+  id           String   @id @default(uuid())
+  name         String
+  email        String   @unique
+  role         String
+  passwordHash String
+  createdAt    DateTime @default(now())
+}
+
+model Item {
+  id        String   @id @default(uuid())
+  name      String
+  reorder   Float    @default(0)
+  createdAt DateTime @default(now())
+
+  units       Unit[]
+  recipeLines RecipeLine[]
+}
+
+model Unit {
+  id         String   @id @default(uuid())
+  itemId     String
+  item       Item     @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  name       String
+  qty        Float    @default(0)
+  costPrice  Float    @default(0)
+  salesPrice Float    @default(0)
+  factor     Float
+  createdAt  DateTime @default(now())
+
+  recipeLines RecipeLine[]
+  sales       Sale[]
+}
+
+model Service {
+  id        String   @id @default(uuid())
+  name      String
+  price     Float    @default(0)
+  createdAt DateTime @default(now())
+
+  recipeLines RecipeLine[]
+}
+
+model RecipeLine {
+  id         String  @id @default(uuid())
+  serviceId  String
+  service    Service @relation(fields: [serviceId], references: [id], onDelete: Cascade)
+  itemId     String
+  item       Item    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  unitId     String
+  unit       Unit    @relation(fields: [unitId], references: [id], onDelete: Cascade)
+  qtyPerUnit Float
+
+  @@unique([serviceId, itemId, unitId])
+}
+
+// type: "product" | "service"
+model Sale {
+  id       String   @id @default(uuid())
+  type     String
+  refId    String
+  unitId   String?
+  unit     Unit?    @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  refName  String
+  qty      Int
+  amount   Float
+  cost     Float
+  at       DateTime @default(now())
+  consumed String? // JSON: [{item_id, unit_id, item_name, unit_name, qty, cost}]
+}
+
+model DailyRecord {
+  date    String @id // YYYY-MM-DD
+  opening String // JSON: [{item_id, unit_id, qty}]
+}
+
+model Settings {
+  id       Int    @id @default(1)
+  shopName String @default("Stockroom")
+}

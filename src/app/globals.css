@@ -1,0 +1,111 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --color-bg: #faf7f2;
+  --color-surface: #ffffff;
+  --color-surface-raised: #fffdfa;
+  --color-border: #e5ddd0;
+  --color-ink: #2b2521;
+  --color-ink-muted: #6b6055;
+  --color-ink-faint: #9c9184;
+
+  --color-accent: #0f766e;
+  --color-accent-ink: #ffffff;
+  --color-accent-soft: #e6f3f1;
+
+  --color-amber: #b45309;
+  --color-amber-ink: #ffffff;
+  --color-amber-soft: #fdf1dd;
+
+  --color-red: #b91c1c;
+  --color-red-ink: #ffffff;
+  --color-red-soft: #fbe7e7;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --color-bg: #1c1815;
+    --color-surface: #242019;
+    --color-surface-raised: #2c2620;
+    --color-border: #3a332b;
+    --color-ink: #f2ece3;
+    --color-ink-muted: #b6ab9d;
+    --color-ink-faint: #82766a;
+
+    --color-accent: #2dd4bf;
+    --color-accent-ink: #08302c;
+    --color-accent-soft: #16302d;
+
+    --color-amber: #f0a53a;
+    --color-amber-ink: #2b1a02;
+    --color-amber-soft: #3a2a10;
+
+    --color-red: #f0716b;
+    --color-red-ink: #2b0d0d;
+    --color-red-soft: #3a1616;
+  }
+}
+
+:root[data-theme="dark"] {
+  --color-bg: #1c1815;
+  --color-surface: #242019;
+  --color-surface-raised: #2c2620;
+  --color-border: #3a332b;
+  --color-ink: #f2ece3;
+  --color-ink-muted: #b6ab9d;
+  --color-ink-faint: #82766a;
+
+  --color-accent: #2dd4bf;
+  --color-accent-ink: #08302c;
+  --color-accent-soft: #16302d;
+
+  --color-amber: #f0a53a;
+  --color-amber-ink: #2b1a02;
+  --color-amber-soft: #3a2a10;
+
+  --color-red: #f0716b;
+  --color-red-ink: #2b0d0d;
+  --color-red-soft: #3a1616;
+}
+
+* {
+  border-color: var(--color-border);
+}
+
+html,
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+}
+
+body {
+  font-feature-settings: "tnum" 1;
+}
+
+::selection {
+  background: var(--color-accent-soft);
+}
+
+input,
+select,
+button {
+  font-family: inherit;
+}
+
+/* Inline-editable table cells: click a number to edit, commit on blur. */
+.editable-cell input {
+  background: transparent;
+  border: none;
+  width: 100%;
+  font-family: var(--font-plex-mono);
+  color: inherit;
+  padding: 2px 4px;
+  border-radius: 4px;
+}
+.editable-cell input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+  background: var(--color-surface);
+}
