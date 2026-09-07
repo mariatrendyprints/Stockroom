@@ -1,39 +1,43 @@
-import { withAuth } from "next-auth/middleware";
-import { NextResponse } from "next/server";
+import { NextResponse, NextRequest } from "next/server";
+import { getToken } from "next-auth/jwt";
 
 const ADMIN_ONLY_PREFIXES = ["/dashboard", "/reports", "/settings"];
 
-export default withAuth(
-  function middleware(req) {
-    const token = req.nextauth.token;
-    const path = req.nextUrl.pathname;
+export default async function middleware(req: NextRequest) {
+  const secret = process.env.NEXTAUTH_SECRET;
+  const token = await getToken({ req, secret });
+  const path = req.nextUrl.pathname;
 
-    // TEMP DIAGNOSTIC — remove once the Edge/session mismatch is found.
-    console.log("[middleware-debug]", {
-      path,
-      hasToken: !!token,
-      tokenRole: token?.role,
-      secretLen: process.env.NEXTAUTH_SECRET?.length,
-      secretFirst: process.env.NEXTAUTH_SECRET?.slice(0, 3),
-      secretLast: process.env.NEXTAUTH_SECRET?.slice(-3),
-      nextAuthUrl: process.env.NEXTAUTH_URL,
-      cookieNames: req.cookies.getAll().map((c) => c.name),
-    });
+  // TEMP DIAGNOSTIC — remove once the Edge/session mismatch is found.
+  const debugHeaders: Record<string, string> = {
+    "x-debug-has-token": String(!!token),
+    "x-debug-token-role": token?.role ?? "none",
+    "x-debug-secret-len": String(secret?.length ?? 0),
+    "x-debug-secret-first": secret?.slice(0, 3) ?? "",
+    "x-debug-secret-last": secret?.slice(-3) ?? "",
+    "x-debug-cookie-names": req.cookies
+      .getAll()
+      .map((c) => c.name)
+      .join(","),
+  };
 
-    if (ADMIN_ONLY_PREFIXES.some((p) => path.startsWith(p)) && token?.role !== "admin") {
-      return NextResponse.redirect(new URL("/activity", req.url));
-    }
-    return NextResponse.next();
-  },
-  {
-    pages: { signIn: "/login" },
-    // Next.js middleware always runs on Vercel's Edge Runtime, a separate
-    // runtime from the Node.js one the rest of the app uses. withAuth's
-    // implicit fallback to process.env.NEXTAUTH_SECRET doesn't reliably
-    // reach the Edge Runtime, so it's passed explicitly here.
-    secret: process.env.NEXTAUTH_SECRET,
+  function withDebug(res: NextResponse) {
+    for (const [k, v] of Object.entries(debugHeaders)) res.headers.set(k, v);
+    return res;
   }
-);
+
+  if (!token) {
+    const signInUrl = new URL("/login", req.url);
+    signInUrl.searchParams.set("callbackUrl", path);
+    return withDebug(NextResponse.redirect(signInUrl));
+  }
+
+  if (ADMIN_ONLY_PREFIXES.some((p) => path.startsWith(p)) && token.role !== "admin") {
+    return withDebug(NextResponse.redirect(new URL("/activity", req.url)));
+  }
+
+  return withDebug(NextResponse.next());
+}
 
 export const config = {
   matcher: ["/dashboard/:path*", "/reports/:path*", "/settings/:path*", "/activity/:path*"],
