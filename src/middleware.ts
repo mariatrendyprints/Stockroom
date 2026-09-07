@@ -15,6 +15,11 @@ export default withAuth(
   },
   {
     pages: { signIn: "/login" },
+    // Next.js middleware always runs on Vercel's Edge Runtime, a separate
+    // runtime from the Node.js one the rest of the app uses. withAuth's
+    // implicit fallback to process.env.NEXTAUTH_SECRET doesn't reliably
+    // reach the Edge Runtime, so it's passed explicitly here.
+    secret: process.env.NEXTAUTH_SECRET,
   }
 );
 
