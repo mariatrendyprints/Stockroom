@@ -42,6 +42,42 @@ this to a team).
 `npm run db:seed` is safe to re-run: it skips the admin account if that
 email already exists, and skips demo data if any item already exists.
 
+## Demo deployment (for presentations)
+
+A second deployment with sample data and public demo logins, fully
+isolated from production so visitors can poke at anything without
+touching real data.
+
+1. **Separate Supabase project** — create a new one (its own database).
+   Point a local `.env` at it (`DATABASE_URL` / `DIRECT_URL`), then:
+   ```bash
+   npm run db:migrate      # apply the schema to the demo database
+   npm run db:seed:demo     # wipe + load sample data (see below)
+   ```
+   `db:seed:demo` is **destructive** — it clears every table and reloads
+   the sample set. That's intentional: re-run it any time to reset the
+   demo to a clean state. Never run it against production.
+
+2. **Separate Vercel project** — import the same GitHub repo into a new
+   project. Env vars: the demo Supabase `DATABASE_URL` / `DIRECT_URL`, a
+   fresh `NEXTAUTH_SECRET`, `NEXTAUTH_URL` set to the demo domain, and
+   **`NEXT_PUBLIC_DEMO_MODE="true"`**. That last one is a build-time
+   variable — if you add it after the first deploy, redeploy for it to
+   take effect.
+
+With `NEXT_PUBLIC_DEMO_MODE` on: the sign-in page shows the demo
+credentials (with one-click "Fill" buttons) and the app carries a "demo
+environment" banner.
+
+**Demo logins** (created by `db:seed:demo`):
+- Admin — `demo-admin@stockroom.local` / `demo1234`
+- Staff — `demo-staff@stockroom.local` / `demo1234`
+
+The sample set is Maria Trendy Prints–flavoured: bond paper, blank mugs
+and tumblers, photo paper, sticker vinyl (one item deliberately Low, one
+Out), four services with recipes, and ~5 days of backdated sales so the
+dashboard stats and reports aren't empty.
+
 ## Roles and access control (spec §7)
 
 - **Staff**: can only reach `/activity` — log product/service sales.

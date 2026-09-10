@@ -5,6 +5,8 @@ import { usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import ThemeToggle from "@/components/ThemeToggle";
 
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+
 type Props = {
   name: string;
   role: "staff" | "admin";
@@ -24,6 +26,11 @@ export default function Header({ name, role }: Props) {
 
   return (
     <header className="border-b border-border bg-surface">
+      {DEMO_MODE && (
+        <div className="bg-amber text-amber-ink text-center text-xs py-1 px-4">
+          Demo environment — sample data, changes here don&apos;t affect anything real.
+        </div>
+      )}
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 h-14 flex items-center justify-between gap-4">
         <div className="flex items-center gap-6">
           <span className="font-semibold tracking-tight">Stockroom</span>

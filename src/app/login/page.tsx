@@ -4,6 +4,12 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 
+const DEMO_MODE = process.env.NEXT_PUBLIC_DEMO_MODE === "true";
+const DEMO_ACCOUNTS = [
+  { label: "Admin", email: "demo-admin@stockroom.local", password: "demo1234" },
+  { label: "Staff", email: "demo-staff@stockroom.local", password: "demo1234" },
+];
+
 export default function LoginPage() {
   const router = useRouter();
   const [email, setEmail] = useState("");
@@ -68,6 +74,32 @@ export default function LoginPage() {
         >
           {loading ? "Signing in…" : "Sign in"}
         </button>
+
+        {DEMO_MODE && (
+          <div className="mt-6 rounded-md border border-amber-soft bg-amber-soft/50 p-3 text-xs text-ink-muted">
+            <p className="font-medium text-amber mb-1.5">Demo environment</p>
+            <p className="mb-2">Sample data — feel free to change anything. Nothing here is real.</p>
+            <div className="space-y-1.5">
+              {DEMO_ACCOUNTS.map((a) => (
+                <div key={a.email} className="flex items-center justify-between gap-2">
+                  <span className="font-mono">
+                    {a.label}: {a.email} / {a.password}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setEmail(a.email);
+                      setPassword(a.password);
+                    }}
+                    className="shrink-0 rounded border border-border px-1.5 py-0.5 hover:text-ink"
+                  >
+                    Fill
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </form>
     </div>
   );
